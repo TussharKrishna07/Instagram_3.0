@@ -21,16 +21,6 @@ const getUser = async () => {
   console.log(getter);
 };
 
-async function connectWallet(username){
-  const provider2 = new ethers.providers.Web3Provider(window.ethereum);
-  await provider2.send("eth_requestAccounts", []);
-  const signer = provider2.getSigner();
-  const address = signer.getAddress();
-  console.log(address)
-  const contract2 = new ethers.Contract(import.meta.env.VITE_CONTRACT_ADDRESS, abi, signer); 
-  const tx = await contract2.isSignedUp();
-  console.log(tx)
-}
 
 function LoginPage() {
   const navigate = useNavigate();
@@ -42,10 +32,30 @@ function LoginPage() {
   const handleSubmit = (e) => {
     e.preventDefault();
     console.log('Login attempted with:', username, password);
+
+    async function connectWallet(username){
+      const provider2 = new ethers.providers.Web3Provider(window.ethereum);
+      await provider2.send("eth_requestAccounts", []);
+      const signer = provider2.getSigner();
+      const address = signer.getAddress();
+      console.log(address)
+      const contract2 = new ethers.Contract(import.meta.env.VITE_CONTRACT_ADDRESS, abi, signer); 
+      const isRegistered = await contract2.isSignedUp();
+      console.log(isRegistered);
+      setIsRegistered(isRegistered);
+      if (isRegistered===false){
+        navigate("/SignUpPage");
+      }else{
+        navigate("/HomePage");
+      }
+    }
+    
+    
+
     connectWallet(username);
     getUser();
   };
-    
+
   return (
     <div >
       <h2>Login</h2>
