@@ -12,7 +12,7 @@ const contractABI = [
   "function isSignedUp() public view returns (bool)"
 ]
 
-const contractAddress = "0xdE5aE03fa3960a8AF95C66e8335380b2478a5166"
+const contractAddress = import.meta.env.VITE_CONTRACT_ADDRESS
 
 export function Web3Provider({ children }) {
   const [account, setAccount] = useState(null)

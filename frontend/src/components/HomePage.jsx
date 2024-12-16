@@ -4,6 +4,8 @@ import { useNavigate } from 'react-router-dom'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
+import LoginPage from './LoginPage'
+import SignUpPage from './SignUpPage'
 
 export default function HomePage() {
   const { account, contract, connectWallet, isSignedUp } = useWeb3()
@@ -14,9 +16,9 @@ export default function HomePage() {
 
   useEffect(() => {
     if (!account) {
-      navigate('/login')
+      navigate('/')
     } else if (!isSignedUp) {
-      navigate('/signup')
+      navigate('/SignUpPage')
     } else {
       fetchPosts()
     }

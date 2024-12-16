@@ -16,7 +16,6 @@ const abi = [
 function LoginPage() {
   const navigate = useNavigate();
   const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
   const [isRegistered, setIsRegistered] = useState(null);
 
   
