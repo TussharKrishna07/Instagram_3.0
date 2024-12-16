@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 
-export default function HomePage() {
+function HomePage() {
   const { account, contract, connectWallet, isSignedUp } = useWeb3()
   const [posts, setPosts] = useState([])
   const [newPost, setNewPost] = useState('')
@@ -134,6 +134,4 @@ export default function HomePage() {
     </div>
   );
 }
-
 export default HomePage;
-
