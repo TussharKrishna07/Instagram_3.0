@@ -21,9 +21,11 @@ function HomePage() {
     try {
       const provider = new ethers.providers.Web3Provider(window.ethereum);
       const signer = provider.getSigner();
+   
       const contract = new ethers.Contract(import.meta.env.VITE_CONTRACT_ADDRESS, abi, signer);
 
       const postCount = await contract.getPostsCount();
+      console.log(postCount)
       const fetchedPosts = [];
 
       for (let i = 0; i < postCount; i++) {
