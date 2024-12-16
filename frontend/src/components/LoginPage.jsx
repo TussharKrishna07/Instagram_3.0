@@ -5,38 +5,49 @@ import { useNavigate } from 'react-router-dom';
 const abi = [
   "function signUp(string memory name) public",
   "function getUser(uint256 index) public view returns (string memory name, address userAddr)",
-  "function isSignedUp() public view returns (bool)"
+  "function isSignedUp() public view returns (bool)",
+  "function getUserName(address addr) public view returns (string memory userName)"
 ];
 
-function SignUpPage() {
-  const [username, setUsername] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+function LoginPage() {
   const navigate = useNavigate();
+  const [username, setUsername] = useState('');
+  const [isRegistered, setIsRegistered] = useState(null);
+  
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsLoading(true);
-
-    try {
-      const provider = new ethers.providers.Web3Provider(window.ethereum);
-      await provider.send("eth_requestAccounts", []);
-      const signer = provider.getSigner();
-      const contract = new ethers.Contract(import.meta.env.VITE_CONTRACT_ADDRESS, abi, signer);
-      const tx = await contract.signUp(username);
-      await tx.wait();
-      navigate("/home");
-    } catch (error) {
-      console.error("Error signing up:", error);
-      alert("Failed to sign up. Please try again.");
-    } finally {
-      setIsLoading(false);
+  async function connectWallet(username){
+    console.log('Login attempted with:', username);
+    if (!window.ethereum) {
+      throw new Error("MetaMask is not installed");
     }
+    const provider = new ethers.providers.Web3Provider(window.ethereum);
+    await provider.send("eth_requestAccounts", []);
+    const signer = provider.getSigner();
+    const address = await signer.getAddress();
+    console.log(address)
+    console.log(import.meta.env.VITE_CONTRACT_ADDRESS)
+    const contract = new ethers.Contract(import.meta.env.VITE_CONTRACT_ADDRESS, abi, signer); 
+    const isRegistered = await contract.isSignedUp();
+
+    setIsRegistered(isRegistered);
+    //checking the if the user is registered or not and navigating 
+    if(isRegistered===false){
+      navigate("/SignUpPage");
+    }else{
+      navigate("/HomePage");
+    }
+  }
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    connectWallet(username);
   };
+
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">Create your account</h2>
+        <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">Sign in to your account</h2>
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
@@ -60,13 +71,13 @@ function SignUpPage() {
             </div>
 
             <div>
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-              >
-                {isLoading ? 'Signing up...' : 'Sign up'}
-              </button>
+            <button
+              type="submit"
+              
+              className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            >
+              Sign in
+            </button>
             </div>
           </form>
 
@@ -77,17 +88,17 @@ function SignUpPage() {
               </div>
               <div className="relative flex justify-center text-sm">
                 <span className="px-2 bg-white text-gray-500">
-                  Already have an account?
+                  Don't have an account?
                 </span>
               </div>
             </div>
 
             <div className="mt-6">
               <button
-                onClick={() => navigate('/login')}
+                onClick={() => navigate('/SignUpPage')}
                 className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-indigo-600 bg-white hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
               >
-                Sign in
+                Sign up
               </button>
             </div>
           </div>
@@ -97,5 +108,5 @@ function SignUpPage() {
   );
 }
 
-export default SignUpPage;
+export default LoginPage;
 
