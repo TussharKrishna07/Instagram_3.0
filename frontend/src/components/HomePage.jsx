@@ -2,6 +2,12 @@ import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { ethers } from 'ethers';
 
+const abi = [
+  "function makePost(string memory content) public",
+  "function getPostsCount() public view returns (uint256)",
+  "function getPost(uint256 i) public view returns (string memory, address, address[] memory, address[] memory, uint256)",
+  "function getUserName(address addr) public view returns (string memory userName)"
+];
 
 function HomePage() {
   const [posts, setPosts] = useState([]);
@@ -53,8 +59,8 @@ function HomePage() {
         maxBodyLength: 'Infinity', // Required to prevent Axios from erroring out with large files
         headers: {
           'Content-Type': `multipart/form-data; boundary=${data._boundary}`,
-          pinata_api_key: process.env.REACT_APP_PINATA_API_KEY, // Ensure these are set
-          pinata_secret_api_key: process.env.REACT_APP_PINATA_SECRET_API_KEY,
+          pinata_api_key: process.env.VITE_PINATA_API_KEY, // Ensure these are set
+          pinata_secret_api_key: process.env.VITE_PINATA_SECRET_API_KEY,
         },
       });
       return response.data.IpfsHash; // CID
@@ -112,7 +118,7 @@ function HomePage() {
       }
 
       // Interact with the smart contract
-      const tx = await contract.makePost(newPost, tokenURI);
+      const tx = await contract.makePost(newPost);
       await tx.wait();
 
       setNewPost('');
