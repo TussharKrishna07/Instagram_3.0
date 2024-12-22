@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { ethers } from 'ethers';
 
 const abi = [
@@ -12,6 +12,9 @@ function HomePage() {
   const [posts, setPosts] = useState([]);
   const [newPost, setNewPost] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [preview, setPreview] = useState(null);
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     fetchPosts();
@@ -47,16 +50,31 @@ function HomePage() {
       const signer = provider.getSigner();
       const contract = new ethers.Contract(import.meta.env.VITE_CONTRACT_ADDRESS, abi, signer);
 
-      const tx = await contract.makePost(newPost);
+      let imageUrl = '';
+      if (selectedFile) {
+        imageUrl = 'uploaded_image_url_here'; // Replace with actual upload logic
+      }
+
+      const tx = await contract.makePost(newPost, imageUrl);
       await tx.wait();
 
       setNewPost('');
+      setSelectedFile(null);
+      setPreview(null);
       fetchPosts();
     } catch (error) {
       console.error("Error creating post:", error);
       alert("Failed to create post. Please try again.");
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleFileUpload = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      setSelectedFile(file);
+      setPreview(URL.createObjectURL(file));
     }
   };
 
@@ -83,7 +101,29 @@ function HomePage() {
                 ></textarea>
               </div>
             </div>
+            {preview && (
+              <div className="preview-container mt-2">
+                <img src={preview} alt="Preview" className="preview-image" />
+              </div>
+            )}
             <div className="mt-2">
+              <button
+                type="button"
+                style={{ marginRight: '10px' }}
+                onClick={() => fileInputRef.current.click()}
+                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+              >
+                Upload Media
+              </button>
+
+              <input
+                type="file"
+                accept="image/*,video/*"
+                style={{ display: 'none' }}
+                ref={fileInputRef}
+                onChange={handleFileUpload}
+              />
+              
               <button
                 type="submit"
                 disabled={isLoading}
@@ -129,4 +169,3 @@ function HomePage() {
 }
 
 export default HomePage;
-
