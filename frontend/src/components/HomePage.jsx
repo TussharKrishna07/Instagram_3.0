@@ -1,12 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
+import axios from 'axios';
 import { ethers } from 'ethers';
 
-const abi = [
-  "function makePost(string memory content) public",
-  "function getPostsCount() public view returns (uint256)",
-  "function getPost(uint256 i) public view returns (string memory, address, address[] memory, address[] memory, uint256)",
-  "function getUserName(address addr) public view returns (string memory userName)"
-];
 
 function HomePage() {
   const [posts, setPosts] = useState([]);
@@ -41,6 +36,53 @@ function HomePage() {
     }
   };
 
+  // Function to upload file to Pinata
+  const uploadToPinata = async (file) => {
+    const url = `https://api.pinata.cloud/pinning/pinFileToIPFS`;
+    let data = new FormData();
+    data.append('file', file);
+
+    // Optional: Add metadata to pinning
+    const metadata = JSON.stringify({
+      name: file.name,
+    });
+    data.append('pinataMetadata', metadata);
+
+    try {
+      const response = await axios.post(url, data, {
+        maxBodyLength: 'Infinity', // Required to prevent Axios from erroring out with large files
+        headers: {
+          'Content-Type': `multipart/form-data; boundary=${data._boundary}`,
+          pinata_api_key: process.env.REACT_APP_PINATA_API_KEY, // Ensure these are set
+          pinata_secret_api_key: process.env.REACT_APP_PINATA_SECRET_API_KEY,
+        },
+      });
+      return response.data.IpfsHash; // CID
+    } catch (error) {
+      console.error('Error uploading file to Pinata:', error);
+      throw new Error('Pinata upload failed');
+    }
+  };
+
+  // Function to upload JSON metadata to Pinata
+  const uploadMetadataToPinata = async (metadata) => {
+    const url = `https://api.pinata.cloud/pinning/pinJSONToIPFS`;
+
+    try {
+      const response = await axios.post(url, metadata, {
+        headers: {
+          'Content-Type': 'application/json',
+          pinata_api_key: process.env.VITE_PINATA_API_KEY,
+          pinata_secret_api_key: process.env.VITE_PINATA_SECRET_API_KEY,
+        },
+      });
+      return response.data.IpfsHash; // CID
+    } catch (error) {
+      console.error('Error uploading JSON to Pinata:', error);
+      throw new Error('Pinata metadata upload failed');
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
@@ -50,12 +92,27 @@ function HomePage() {
       const signer = provider.getSigner();
       const contract = new ethers.Contract(import.meta.env.VITE_CONTRACT_ADDRESS, abi, signer);
 
-      let imageUrl = '';
+      let tokenURI = '';
+
       if (selectedFile) {
-        imageUrl = 'uploaded_image_url_here'; // Replace with actual upload logic
+        // Upload image to Pinata
+        const imageCID = await uploadToPinata(selectedFile);
+        const imageURI = `https://gateway.pinata.cloud/ipfs/${imageCID}`;
+
+        // Create metadata
+        const metadata = {
+          name: newPost, // Or any other title
+          description: 'User Post',
+          image: imageURI,
+        };
+
+        // Upload metadata to Pinata
+        const metadataCID = await uploadMetadataToPinata(metadata);
+        tokenURI = `https://gateway.pinata.cloud/ipfs/${metadataCID}`;
       }
 
-      const tx = await contract.makePost(newPost, imageUrl);
+      // Interact with the smart contract
+      const tx = await contract.makePost(newPost, tokenURI);
       await tx.wait();
 
       setNewPost('');
@@ -103,7 +160,12 @@ function HomePage() {
             </div>
             {preview && (
               <div className="preview-container mt-2">
-                <img src={preview} alt="Preview" className="preview-image" />
+                {/* Render image or video based on file type */}
+                {selectedFile.type.startsWith('image') ? (
+                  <img src={preview} alt="Preview" className="preview-image" />
+                ) : (
+                  <video src={preview} className="preview-video" controls />
+                )}
               </div>
             )}
             <div className="mt-2">
