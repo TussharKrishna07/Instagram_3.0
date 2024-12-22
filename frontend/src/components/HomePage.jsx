@@ -12,7 +12,6 @@ const abi = [
 function HomePage() {
   const [posts, setPosts] = useState([]);
   const [newPost, setNewPost] = useState('');
-  const [imageURI, setimageURI] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
   const [preview, setPreview] = useState(null);
@@ -103,14 +102,13 @@ function HomePage() {
       const contract = new ethers.Contract(import.meta.env.VITE_CONTRACT_ADDRESS, abi, signer);
 
       let tokenURI = '';
-      let localImageURI = '';
+      let imageURI = '';
 
       if (selectedFile) {
         // Upload image to Pinata
         const imageCID = await uploadToPinata(selectedFile);
         console.log(imageCID)
-        const localImageURI = `https://gateway.pinata.cloud/ipfs/${imageCID}`;
-        setimageURI(localImageURI)
+        imageURI = `https://gateway.pinata.cloud/ipfs/${imageCID}`;
         console.log(imageURI)
         // Create metadata
         const metadata = {
