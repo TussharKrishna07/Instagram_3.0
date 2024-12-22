@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 contract SocialMedia {
     struct Post {
         string content;
+        string imageURI;       // New field for image URL
         address owner;
         uint256 time;
         address[] likes;
@@ -38,8 +39,9 @@ contract SocialMedia {
         return addrToUsers[addr].name;
     }
 
-    function makePost(string memory content) public onlySignedUp {
-        posts.push(Post(content, msg.sender, block.timestamp, new address[](0),new address[](0) ));}
+    function makePost(string memory content, string memory imageURI) public onlySignedUp {
+        posts.push(Post(content, imageURI, msg.sender, block.timestamp, new address[](0), new address[](0)));
+    }
 
     function getPostsCount() public view returns (uint256) {
         return posts.length;
@@ -53,6 +55,7 @@ contract SocialMedia {
         view 
         returns (
             string memory, 
+            string memory,      
             address, 
             address[] memory, 
             address[] memory, 
@@ -61,7 +64,14 @@ contract SocialMedia {
     {
         require(i < posts.length, "Post index out of range");
         Post storage post = posts[i];
-        return (post.content, post.owner, post.likes, post.dislikes, post.time);
+        return (
+            post.content, 
+            post.imageURI,        
+            post.owner, 
+            post.likes, 
+            post.dislikes, 
+            post.time
+        );
     }
 
     function getUser(uint256 index) public view returns (string memory name, address userAddr) {
