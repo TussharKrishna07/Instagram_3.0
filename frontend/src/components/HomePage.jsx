@@ -3,15 +3,16 @@ import axios from 'axios';
 import { ethers } from 'ethers';
 
 const abi = [
-  "function makePost(string memory content) public",
+  "function makePost(string memory content, string memory imageURI)",
   "function getPostsCount() public view returns (uint256)",
-  "function getPost(uint256 i) public view returns (string memory, address, address[] memory, address[] memory, uint256)",
+  "function getPost(uint256 i) public view returns (string memory,string memory, address, address[] memory, address[] memory, uint256)",
   "function getUserName(address addr) public view returns (string memory userName)"
 ];
 
 function HomePage() {
   const [posts, setPosts] = useState([]);
   const [newPost, setNewPost] = useState('');
+  const [imageURI, setimageURI] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
   const [preview, setPreview] = useState(null);
@@ -26,14 +27,14 @@ function HomePage() {
       const provider = new ethers.providers.Web3Provider(window.ethereum);
       const signer = provider.getSigner();
       const contract = new ethers.Contract(import.meta.env.VITE_CONTRACT_ADDRESS, abi, signer);
-
+      console.log(import.meta.env.VITE_CONTRACT_ADDRESS);
       const postCount = await contract.getPostsCount();
       const fetchedPosts = [];
 
       for (let i = 0; i < postCount; i++) {
-        const [content, owner, likes, dislikes, time] = await contract.getPost(i);
+        const [content,imageURI, owner, likes, dislikes, time] = await contract.getPost(i);
         const username = await contract.getUserName(owner);
-        fetchedPosts.push({ content, owner, likes, dislikes, time: new Date(time * 1000), username });
+        fetchedPosts.push({ content,imageURI, owner, likes, dislikes, time: new Date(time * 1000), username });
       }
 
       setPosts(fetchedPosts.reverse());
@@ -102,13 +103,15 @@ function HomePage() {
       const contract = new ethers.Contract(import.meta.env.VITE_CONTRACT_ADDRESS, abi, signer);
 
       let tokenURI = '';
+      let localImageURI = '';
 
       if (selectedFile) {
         // Upload image to Pinata
         const imageCID = await uploadToPinata(selectedFile);
         console.log(imageCID)
-        const imageURI = `https://gateway.pinata.cloud/ipfs/${imageCID}`;
-        
+        const localImageURI = `https://gateway.pinata.cloud/ipfs/${imageCID}`;
+        setimageURI(localImageURI)
+        console.log(imageURI)
         // Create metadata
         const metadata = {
           name: newPost, // Or any other title
@@ -120,9 +123,9 @@ function HomePage() {
         const metadataCID = await uploadMetadataToPinata(metadata);
         tokenURI = `https://gateway.pinata.cloud/ipfs/${metadataCID}`;
       }
-
       // Interact with the smart contract
-      const tx = await contract.makePost(newPost);
+      console.log(imageURI);
+      const tx = await contract.makePost(newPost,imageURI);
       await tx.wait();
 
       setNewPost('');
@@ -212,14 +215,23 @@ function HomePage() {
                 <div className="px-4 py-5 sm:px-6">
                   <h3 className="text-lg leading-6 font-medium text-gray-900">{post.username}</h3>
                   <p className="mt-1 max-w-2xl text-sm text-gray-500">
-                    {post.time.toLocaleString()}
+                    {new Date(post.time * 1000).toLocaleString()}
                   </p>
                 </div>
                 <div className="border-t border-gray-200 px-4 py-5 sm:p-0">
                   <dl className="sm:divide-y sm:divide-gray-200">
                     <div className="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                       <dt className="text-sm font-medium text-gray-500">Content</dt>
-                      <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{post.content}</dd>
+                      <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                        {post.content}
+                        {post.imageURI && (
+                          <img
+                            src={post.imageURI}
+                            alt="Post Image"
+                            className="mt-4 max-w-full h-auto rounded"
+                          />
+                        )}
+                      </dd>
                     </div>
                     <div className="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                       <dt className="text-sm font-medium text-gray-500">Likes</dt>
