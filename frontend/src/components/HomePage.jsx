@@ -55,12 +55,14 @@ function HomePage() {
     data.append('pinataMetadata', metadata);
 
     try {
+      console.log(import.meta.env.VITE_PINATA_JWT)
       const response = await axios.post(url, data, {
         maxBodyLength: 'Infinity', // Required to prevent Axios from erroring out with large files
         headers: {
           'Content-Type': `multipart/form-data; boundary=${data._boundary}`,
-          pinata_api_key: process.env.VITE_PINATA_API_KEY, // Ensure these are set
-          pinata_secret_api_key: process.env.VITE_PINATA_SECRET_API_KEY,
+          // pinata_api_key: import.meta.env.VITE_PINATA_API_KEY,
+          // pinata_secret_api_key: import.meta.env.VITE_PINATA_SECRET_API_KEY,
+          Authorization: `Bearer ${import.meta.env.VITE_PINATA_JWT}`,
         },
       });
       return response.data.IpfsHash; // CID
@@ -78,8 +80,9 @@ function HomePage() {
       const response = await axios.post(url, metadata, {
         headers: {
           'Content-Type': 'application/json',
-          pinata_api_key: process.env.VITE_PINATA_API_KEY,
-          pinata_secret_api_key: process.env.VITE_PINATA_SECRET_API_KEY,
+          // pinata_api_key: import.meta.env.VITE_PINATA_API_KEY,
+          // pinata_secret_api_key: import.meta.env.VITE_PINATA_SECRET_API_KEY,
+          Authorization: `Bearer ${import.meta.env.VITE_PINATA_JWT}`,
         },
       });
       return response.data.IpfsHash; // CID
@@ -103,8 +106,9 @@ function HomePage() {
       if (selectedFile) {
         // Upload image to Pinata
         const imageCID = await uploadToPinata(selectedFile);
+        console.log(imageCID)
         const imageURI = `https://gateway.pinata.cloud/ipfs/${imageCID}`;
-
+        
         // Create metadata
         const metadata = {
           name: newPost, // Or any other title
