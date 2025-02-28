@@ -19,6 +19,7 @@ contract SocialMedia {
     mapping(address => User) public addrToUsers;
     Post[] internal posts;
     User[] internal users;
+    mapping(address => address[]) public followers; // Track followers for each user
 
     modifier onlySignedUp() {
         require(bytes(addrToUsers[msg.sender].name).length > 0, "User not signed up");
@@ -78,5 +79,82 @@ contract SocialMedia {
         require(index < users.length, "User index out of range");
         User storage user = users[index];
         return (user.name, user.userAddr);
+    }
+
+    function likePost(uint256 index) public onlySignedUp {
+        require(index < posts.length, "Post index out of range");
+        Post storage post = posts[index];
+
+        // Check if the user already liked the post
+        for (uint256 i = 0; i < post.likes.length; i++) {
+            if (post.likes[i] == msg.sender) {
+                // Unlike: Remove the address from the likes array
+                post.likes[i] = post.likes[post.likes.length - 1];
+                post.likes.pop();
+                return;
+            }
+        }
+
+        // Check if the user disliked the post, remove from dislikes if needed
+        for (uint256 i = 0; i < post.dislikes.length; i++) {
+            if (post.dislikes[i] == msg.sender) {
+                post.dislikes[i] = post.dislikes[post.dislikes.length - 1];
+                post.dislikes.pop();
+                break;
+            }
+        }
+
+        // Add the user to the likes array
+        post.likes.push(msg.sender);
+    }
+
+    function dislikePost(uint256 index) public onlySignedUp {
+        require(index < posts.length, "Post index out of range");
+        Post storage post = posts[index];
+
+        // Check if the user already disliked the post
+        for (uint256 i = 0; i < post.dislikes.length; i++) {
+            if (post.dislikes[i] == msg.sender) {
+                // Undislike: Remove the address from the dislikes array
+                post.dislikes[i] = post.dislikes[post.dislikes.length - 1];
+                post.dislikes.pop();
+                return;
+            }
+        }
+
+        // Check if the user liked the post, remove from likes if needed
+        for (uint256 i = 0; i < post.likes.length; i++) {
+            if (post.likes[i] == msg.sender) {
+                post.likes[i] = post.likes[post.likes.length - 1];
+                post.likes.pop();
+                break;
+            }
+        }
+
+        // Add the user to the dislikes array
+        post.dislikes.push(msg.sender);
+    }
+
+    function followUser(address userToFollow) public onlySignedUp {
+        // Prevent user from following themselves
+        require(userToFollow != msg.sender, "Cannot follow yourself");
+
+        // Check if the user is already being followed
+        address[] storage currentFollowers = followers[msg.sender];
+        for (uint256 i = 0; i < currentFollowers.length; i++) {
+            if (currentFollowers[i] == userToFollow) {
+                // If already following, remove from the list (unfollow)
+                currentFollowers[i] = currentFollowers[currentFollowers.length - 1];
+                currentFollowers.pop();
+                return;
+            }
+        }
+
+        // Add the user to the followers list
+        followers[msg.sender].push(userToFollow);
+    }
+
+    function getFollowers(address userAddress) public view returns (address[] memory) {
+        return followers[userAddress];
     }
 }
