@@ -12,7 +12,7 @@ function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/SignUpPage" element={<SignUpPage />} />
         <Route path="/HomePage" element={<HomePage />} />
-        <Route path="/ProfilePage" element={<ProfilePage />} />
+        <Route path="/ProfilePage/:userAddress" element={<ProfilePage />} />
         <Route path="/" element={<Navigate to="/login" replace />} />
       </Routes>
     </Router>

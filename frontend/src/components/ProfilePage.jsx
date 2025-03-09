@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ethers } from 'ethers';
+import { Link, useParams } from 'react-router-dom';
 
 const abi = [
     "function getUserName(address addr) public view returns (string memory userName)",
@@ -15,19 +16,26 @@ function ProfilePage() {
     const [posts, setPosts] = useState([]);
     const [followers, setFollowers] = useState(0); 
     const [following, setFollowing] = useState(0);
+    const { userAddress } = useParams();
 
     useEffect(() => {
-        fetchProfileData();
-        fetchUserPosts();
-    }, [account]);
+        fetchProfileData(userAddress);
+        fetchUserPosts(userAddress);
+    }, [userAddress]);
 
-    const fetchProfileData = async () => {
+    const fetchProfileData = async (userAddress) => {
         try {
             const provider = new ethers.providers.Web3Provider(window.ethereum);
             await provider.send("eth_requestAccounts", []);
             const signer = provider.getSigner();
-            const address = await signer.getAddress();
-            setAccount(address);
+            let address;
+            if (userAddress) {
+                address = userAddress;
+                setAccount(userAddress);
+            } else {
+                address = await signer.getAddress();
+                setAccount(address);
+            }
 
             const contract = new ethers.Contract(import.meta.env.VITE_CONTRACT_ADDRESS, abi, signer);
             const userName = await contract.getUserName(address);
@@ -43,8 +51,9 @@ function ProfilePage() {
         }
     };
 
-    const fetchUserPosts = async () => {
-        if (!account) return;
+    const fetchUserPosts = async (userAddress) => {
+        let accountAddress = userAddress ? userAddress : account;
+        if (!accountAddress) return;
         try {
             const provider = new ethers.providers.Web3Provider(window.ethereum);
             const signer = provider.getSigner();
@@ -54,7 +63,7 @@ function ProfilePage() {
 
             for (let i = 0; i < postCount; i++) {
                 const [content, imageURI, owner, likes, dislikes, time] = await contract.getPost(i);
-                if (owner.toLowerCase() === account.toLowerCase()) {
+                if (owner.toLowerCase() === accountAddress.toLowerCase()) {
                     fetchedPosts.push({ content, imageURI, owner, likes, dislikes, time });
                 }
             }
@@ -71,9 +80,9 @@ function ProfilePage() {
                 <div className="bg-white shadow rounded-lg mb-8">
                     <div className="p-6">
                         <div className="flex items-center">
-                            <div className="w-16 h-16 rounded-full bg-gray-300 flex-shrink-0">
+                            <Link to={`/ProfilePage/${account}`} className="w-16 h-16 rounded-full bg-gray-300 flex-shrink-0">
                                 {/* Placeholder for profile picture */}
-                            </div>
+                            </Link>
                             <div className="ml-4">
                                 <h2 className="text-xl font-semibold">{username || "Unnamed User"}</h2>
                                 <p className="text-gray-500">{account}</p>
