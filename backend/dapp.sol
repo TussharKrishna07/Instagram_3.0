@@ -20,6 +20,7 @@ contract SocialMedia {
     Post[] internal posts;
     User[] internal users;
     mapping(address => address[]) public followers; // Track followers for each user
+    mapping(address => address[]) public following; // Track users being followed by each user
 
     modifier onlySignedUp() {
         require(bytes(addrToUsers[msg.sender].name).length > 0, "User not signed up");
@@ -140,21 +141,26 @@ contract SocialMedia {
         require(userToFollow != msg.sender, "Cannot follow yourself");
 
         // Check if the user is already being followed
-        address[] storage currentFollowers = followers[msg.sender];
-        for (uint256 i = 0; i < currentFollowers.length; i++) {
-            if (currentFollowers[i] == userToFollow) {
-                // If already following, remove from the list (unfollow)
-                currentFollowers[i] = currentFollowers[currentFollowers.length - 1];
-                currentFollowers.pop();
-                return;
-            }
-        }
+        // address[] storage currentFollowers = followers[msg.sender];
+        // for (uint256 i = 0; i < currentFollowers.length; i++) {
+        //     if (currentFollowers[i] == userToFollow) {
+        //         // If already following, remove from the list (unfollow)
+        //         currentFollowers[i] = currentFollowers[currentFollowers.length - 1];
+        //         currentFollowers.pop();
+        //         return;
+        //     }
+        // }
 
         // Add the user to the followers list
-        followers[msg.sender].push(userToFollow);
+        followers[userToFollow].push(msg.sender);
+        following[msg.sender].push(userToFollow);
     }
 
     function getFollowers(address userAddress) public view returns (address[] memory) {
         return followers[userAddress];
     }
+    function getFollowing(address userAddress) public view returns (address[] memory) {
+        return following[userAddress];
+    }
+    
 }
