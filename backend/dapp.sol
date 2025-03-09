@@ -21,6 +21,7 @@ contract SocialMedia {
     User[] internal users;
     mapping(address => address[]) public followers; // Track followers for each user
     mapping(address => address[]) public following; // Track users being followed by each user
+    mapping(address => Post[]) public userAddrToPosts;
 
     modifier onlySignedUp() {
         require(bytes(addrToUsers[msg.sender].name).length > 0, "User not signed up");
@@ -42,7 +43,9 @@ contract SocialMedia {
     }
 
     function makePost(string memory content, string memory imageURI) public onlySignedUp {
-        posts.push(Post(content, imageURI, msg.sender, block.timestamp, new address[](0), new address[](0)));
+        Post memory newPost = Post(content, imageURI, msg.sender, block.timestamp, new address[](0), new address[](0));
+        posts.push(newPost);
+        userAddrToPosts[msg.sender].push(newPost);  // Add post to user's posts mapping
     }
 
     function getPostsCount() public view returns (uint256) {
@@ -82,10 +85,10 @@ contract SocialMedia {
         return (user.name, user.userAddr);
     }
 
-    function likePost(uint256 index) public onlySignedUp {
+    function likePost(uint256 index) public onlySignedUp { // Should add usertoLike mapping and edit the function 
         require(index < posts.length, "Post index out of range");
         Post storage post = posts[index];
-
+        
         // Check if the user already liked the post
         for (uint256 i = 0; i < post.likes.length; i++) {
             if (post.likes[i] == msg.sender) {

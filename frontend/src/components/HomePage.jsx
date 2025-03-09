@@ -50,7 +50,7 @@ function HomePage() {
         fetchedPosts.push({ content,imageURI, owner, likes, dislikes, time: new Date(time * 1000), username });
       }
 
-      setPosts(fetchedPosts.reverse());
+      setPosts(fetchedPosts);
     } catch (error) {
       console.error("Error fetching posts:", error);
     }

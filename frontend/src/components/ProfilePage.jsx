@@ -7,7 +7,9 @@ const abi = [
     "function getPostsCount() public view returns (uint256)",
     "function getPost(uint256 i) public view returns (string memory,string memory, address, address[] memory, address[] memory, uint256)",
     "function getFollowers(address userAddress) public view returns (address[] memory)",
-    "function getFollowing(address userAddress) public view returns (address[] memory)"
+    "function getFollowing(address userAddress) public view returns (address[] memory)",
+    "function likePost(uint256 index) public",
+    "function dislikePost(uint256 index) public"
 ];
 
 function ProfilePage() {
@@ -67,11 +69,37 @@ function ProfilePage() {
                     fetchedPosts.push({ content, imageURI, owner, likes, dislikes, time });
                 }
             }
-            setPosts(fetchedPosts.reverse());
+            setPosts(fetchedPosts);
         } catch (error) {
             console.error("Error fetching user posts:", error);
         }
     };
+
+    const handleLike = async (index) => {
+    try {
+      const provider = new ethers.providers.Web3Provider(window.ethereum);
+      const signer = provider.getSigner();
+      const contract = new ethers.Contract(import.meta.env.VITE_CONTRACT_ADDRESS, abi, signer);
+      const tx = await contract.likePost(index);
+      await tx.wait();
+      fetchUserPosts(account); // Refresh posts to update like count
+    } catch (error) {
+      console.error("Error liking post:", error);
+    }
+  };
+
+  const handleDislike = async (index) => {
+    try {
+      const provider = new ethers.providers.Web3Provider(window.ethereum);
+      const signer = provider.getSigner();
+      const contract = new ethers.Contract(import.meta.env.VITE_CONTRACT_ADDRESS, abi, signer);
+      const tx = await contract.dislikePost(index);
+      await tx.wait();
+      fetchUserPosts(account); // Refresh posts to update dislike count
+    } catch (error) {
+      console.error("Error disliking post:", error);
+    }
+  };
 
     return (
         <div className="min-h-screen bg-gray-100">
