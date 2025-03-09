@@ -51,6 +51,10 @@ contract SocialMedia {
     function getPostsCount() public view returns (uint256) {
         return posts.length;
     }
+
+    function getUserPostsCount(address userAddress) public view returns(uint256){
+        return userAddrToPosts[userAddress].length;
+    }
     function getUsersCount() public view returns (uint256) {
         return users.length;
     }
@@ -83,6 +87,30 @@ contract SocialMedia {
         require(index < users.length, "User index out of range");
         User storage user = users[index];
         return (user.name, user.userAddr);
+    }
+
+    function getUserPost(uint256 i,address userAddress) 
+        public 
+        view 
+        returns (
+            string memory, 
+            string memory,      
+            address, 
+            address[] memory, 
+            address[] memory, 
+            uint256
+        ) 
+    {
+        require(i < userAddrToPosts[userAddress].length, "Post index out of range");
+        Post storage post = userAddrToPosts[userAddress][i];
+        return (
+            post.content, 
+            post.imageURI,        
+            post.owner, 
+            post.likes, 
+            post.dislikes, 
+            post.time
+        );
     }
 
     function likePost(uint256 index) public onlySignedUp { // Should add usertoLike mapping and edit the function 

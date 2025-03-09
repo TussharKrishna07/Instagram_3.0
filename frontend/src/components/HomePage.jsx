@@ -44,10 +44,12 @@ function HomePage() {
       const postCount = await contract.getPostsCount();
       const fetchedPosts = [];
 
-      for (let i = 0; i < postCount; i++) {
-        const [content,imageURI, owner, likes, dislikes, time] = await contract.getPost(i);
-        const username = await contract.getUserName(owner);
-        fetchedPosts.push({ content,imageURI, owner, likes, dislikes, time: new Date(time * 1000), username });
+      if (postCount > 0) {
+        for (let i = postCount - 1; i >= 0; i--) {
+          const [content, imageURI, owner, likes, dislikes, time] = await contract.getPost(i);
+          const username = await contract.getUserName(owner);
+          fetchedPosts.push({ content, imageURI, owner, likes, dislikes, time: new Date(time * 1000), username });
+        }
       }
 
       setPosts(fetchedPosts);
@@ -165,7 +167,8 @@ function HomePage() {
       const provider = new ethers.providers.Web3Provider(window.ethereum);
       const signer = provider.getSigner();
       const contract = new ethers.Contract(import.meta.env.VITE_CONTRACT_ADDRESS, abi, signer);
-      const tx = await contract.likePost(index);
+      const postCount = await contract.getPostsCount();
+      const tx = await contract.likePost(postCount-index-1);
       await tx.wait();
       fetchPosts(); // Refresh posts to update like count
     } catch (error) {
@@ -178,7 +181,8 @@ function HomePage() {
       const provider = new ethers.providers.Web3Provider(window.ethereum);
       const signer = provider.getSigner();
       const contract = new ethers.Contract(import.meta.env.VITE_CONTRACT_ADDRESS, abi, signer);
-      const tx = await contract.dislikePost(index);
+      const postCount = await contract.getPostsCount();
+      const tx = await contract.dislikePost(postCount-index-1);
       await tx.wait();
       fetchPosts(); // Refresh posts to update dislike count
     } catch (error) {
