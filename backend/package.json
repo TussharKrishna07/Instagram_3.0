@@ -1,6 +1,19 @@
 {
+  "name": "instagram-3.0-chat-server",
+  "version": "1.0.0",
+  "description": "Chat server for Instagram 3.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js"
+  },
   "dependencies": {
-    "@remix-project/remixd": "^0.6.44",
-    "openzeppelin": "^1.0.0"
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "mongoose": "^7.8.6",
+    "socket.io": "^4.7.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
   }
 }
