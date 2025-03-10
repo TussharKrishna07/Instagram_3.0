@@ -113,7 +113,7 @@ contract SocialMedia {
         );
     }
 
-    function likePost(uint256 index) public onlySignedUp { // Should add usertoLike mapping and edit the function 
+    function likePost(uint256 index,address userAddress,uint256 time) public onlySignedUp { // Should add usertoLike mapping and edit the function 
         require(index < posts.length, "Post index out of range");
         Post storage post = posts[index];
         
@@ -138,9 +138,15 @@ contract SocialMedia {
 
         // Add the user to the likes array
         post.likes.push(msg.sender);
+        for (uint256 i = 0; i < userAddrToPosts[userAddress].length; i++) {
+            if (keccak256(abi.encode(userAddrToPosts[userAddress][i].owner,userAddrToPosts[userAddress][i].time)) == keccak256(abi.encode(userAddress,time))) {
+                userAddrToPosts[userAddress][i].likes.push(msg.sender);
+                break;
+            }
+        }
     }
 
-    function dislikePost(uint256 index) public onlySignedUp {
+    function dislikePost(uint256 index,address userAddress,uint256 time) public onlySignedUp {
         require(index < posts.length, "Post index out of range");
         Post storage post = posts[index];
 
@@ -165,6 +171,13 @@ contract SocialMedia {
 
         // Add the user to the dislikes array
         post.dislikes.push(msg.sender);
+        for (uint256 i = 0; i < userAddrToPosts[userAddress].length; i++) {
+            if (keccak256(abi.encode(userAddrToPosts[userAddress][i].owner,userAddrToPosts[userAddress][i].time)) == keccak256(abi.encode(userAddress,time))) {
+                userAddrToPosts[userAddress][i].dislikes.push(msg.sender);
+                break;
+            }
+        }
+
     }
 
     function followUser(address userToFollow) public onlySignedUp {

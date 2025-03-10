@@ -8,8 +8,8 @@ const abi = [
     "function getPost(uint256 i) public view returns (string memory,string memory, address, address[] memory, address[] memory, uint256)",
     "function getFollowers(address userAddress) public view returns (address[] memory)",
     "function getFollowing(address userAddress) public view returns (address[] memory)",
-    "function likePost(uint256 index) public",
-    "function dislikePost(uint256 index) public",
+    "function likePost(uint256 index,address userAddress,uint256 time) public",
+    "function dislikePost(uint256 index,address userAddress,uint256 time) public",
     "function getUserPostsCount(address userAddress) public view returns(uint256)",
     "function getUserPost(uint256 i,address userAdress) public view returns (string memory,string memory, address, address[] memory, address[] memory, uint256)",
 
@@ -78,13 +78,13 @@ function ProfilePage() {
         }
     };
 
-    const handleLike = async (index,userAddress) => {
+    const handleLike = async (index,userAddress,time) => {
     try {
       const provider = new ethers.providers.Web3Provider(window.ethereum);
       const signer = provider.getSigner();
       const contract = new ethers.Contract(import.meta.env.VITE_CONTRACT_ADDRESS, abi, signer);
       const userPostCount = await contract.getUserPostsCount(userAddress);
-      const tx = await contract.likePost(userPostCount-index-1);
+      const tx = await contract.likePost(userPostCount-index-1,userAddress,time);
       await tx.wait();
       fetchUserPosts(account); // Refresh posts to update like count
     } catch (error) {
@@ -92,13 +92,13 @@ function ProfilePage() {
     }
   };
 
-  const handleDislike = async (index,userAddress) => {
+  const handleDislike = async (index,userAddress,time) => {
     try {
       const provider = new ethers.providers.Web3Provider(window.ethereum);
       const signer = provider.getSigner();
       const contract = new ethers.Contract(import.meta.env.VITE_CONTRACT_ADDRESS, abi, signer);
       const userPostCount = await contract.getUserPostsCount(userAddress);
-      const tx = await contract.dislikePost(userPostCount-index-1);
+      const tx = await contract.dislikePost(userPostCount-index-1,userAddress,time);
       await tx.wait();
       fetchUserPosts(account); // Refresh posts to update dislike count
     } catch (error) {
@@ -167,14 +167,14 @@ function ProfilePage() {
                       <dt className="text-sm font-medium text-gray-500">Likes</dt>
                       <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
                         {post.likes.length}
-                        <button onClick={() => handleLike(index,post.owner)} className="ml-2 px-3 py-1 bg-green-200 rounded">Like</button>
+                        <button onClick={() => handleLike(index,post.owner,post.time)} className="ml-2 px-3 py-1 bg-green-200 rounded">Like</button>
                       </dd>
                     </div>
                     <div className="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                       <dt className="text-sm font-medium text-gray-500">Dislikes</dt>
                       <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
                         {post.dislikes.length}
-                        <button onClick={() => handleDislike(index,post.owner)} className="ml-2 px-3 py-1 bg-red-200 rounded">Dislike</button>
+                        <button onClick={() => handleDislike(index,post.owner,post.time)} className="ml-2 px-3 py-1 bg-red-200 rounded">Dislike</button>
                       </dd>
                     </div>
                   </dl>

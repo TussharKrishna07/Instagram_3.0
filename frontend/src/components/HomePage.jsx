@@ -10,8 +10,8 @@ const abi = [
   "function getPostsCount() public view returns (uint256)",
   "function getPost(uint256 i) public view returns (string memory,string memory, address, address[] memory, address[] memory, uint256)",
   "function getUserName(address addr) public view returns (string memory userName)",
-  "function likePost(uint256 index) public",
-  "function dislikePost(uint256 index) public",
+  "function likePost(uint256 index,address userAddress,uint256 time) public",
+  "function dislikePost(uint256 index,address userAddress,uint256 time) public",
   "function followUser(address userToFollow) public"
 ];
 
@@ -48,7 +48,7 @@ function HomePage() {
         for (let i = postCount - 1; i >= 0; i--) {
           const [content, imageURI, owner, likes, dislikes, time] = await contract.getPost(i);
           const username = await contract.getUserName(owner);
-          fetchedPosts.push({ content, imageURI, owner, likes, dislikes, time: new Date(time * 1000), username });
+          fetchedPosts.push({ content, imageURI, owner, likes, dislikes,time, formattedTime: new Date(time * 1000), username });
         }
       }
 
@@ -162,13 +162,13 @@ function HomePage() {
     }
   };
 
-  const handleLike = async (index) => {
+  const handleLike = async (index,userAddress,time) => {
     try {
       const provider = new ethers.providers.Web3Provider(window.ethereum);
       const signer = provider.getSigner();
       const contract = new ethers.Contract(import.meta.env.VITE_CONTRACT_ADDRESS, abi, signer);
       const postCount = await contract.getPostsCount();
-      const tx = await contract.likePost(postCount-index-1);
+      const tx = await contract.likePost(postCount-index-1,userAddress,time);
       await tx.wait();
       fetchPosts(); // Refresh posts to update like count
     } catch (error) {
@@ -176,13 +176,13 @@ function HomePage() {
     }
   };
 
-  const handleDislike = async (index) => {
+  const handleDislike = async (index,userAddress,time) => {
     try {
       const provider = new ethers.providers.Web3Provider(window.ethereum);
       const signer = provider.getSigner();
       const contract = new ethers.Contract(import.meta.env.VITE_CONTRACT_ADDRESS, abi, signer);
       const postCount = await contract.getPostsCount();
-      const tx = await contract.dislikePost(postCount-index-1);
+      const tx = await contract.dislikePost(postCount-index-1,userAddress,time);
       await tx.wait();
       fetchPosts(); // Refresh posts to update dislike count
     } catch (error) {
@@ -290,7 +290,7 @@ function HomePage() {
                     </button>
                   </div>
                   <p className="mt-1 max-w-2xl text-sm text-gray-500">
-                    {new Date(post.time * 1000).toLocaleString()}
+                    {new Date(post.formattedTime * 1000).toLocaleString()}
                   </p>
                 </div>
                 <div className="border-t border-gray-200 px-4 py-5 sm:p-0">
@@ -312,14 +312,14 @@ function HomePage() {
                       <dt className="text-sm font-medium text-gray-500">Likes</dt>
                       <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
                         {post.likes.length}
-                        <button onClick={() => handleLike(index)} className="ml-2 px-3 py-1 bg-green-200 rounded">Like</button>
+                        <button onClick={() => handleLike(index,post.owner,post.time)} className="ml-2 px-3 py-1 bg-green-200 rounded">Like</button>
                       </dd>
                     </div>
                     <div className="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                       <dt className="text-sm font-medium text-gray-500">Dislikes</dt>
                       <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
                         {post.dislikes.length}
-                        <button onClick={() => handleDislike(index)} className="ml-2 px-3 py-1 bg-red-200 rounded">Dislike</button>
+                        <button onClick={() => handleDislike(index,post.owner,post.time)} className="ml-2 px-3 py-1 bg-red-200 rounded">Dislike</button>
                       </dd>
                     </div>
                   </dl>
