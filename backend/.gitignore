@@ -1,2 +1,5 @@
 node_modules
 artifacts
+.deps
+.states
+.sample.sol

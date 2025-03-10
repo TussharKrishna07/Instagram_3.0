@@ -27,6 +27,7 @@ function LoginPage() {
     console.log(address)
     console.log(import.meta.env.VITE_CONTRACT_ADDRESS)
     const contract = new ethers.Contract(import.meta.env.VITE_CONTRACT_ADDRESS, abi, signer); 
+    console.log(contract)
     const isRegistered = await contract.isSignedUp();
 
     setIsRegistered(isRegistered);
