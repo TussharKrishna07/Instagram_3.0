@@ -8,10 +8,10 @@ const abi = [
     "function getPost(uint256 i) public view returns (string memory,string memory, address, address[] memory, address[] memory, uint256)",
     "function getFollowers(address userAddress) public view returns (address[] memory)",
     "function getFollowing(address userAddress) public view returns (address[] memory)",
-    "function likePost(uint256 index,address userAddress,uint256 time) public",
-    "function dislikePost(uint256 index,address userAddress,uint256 time) public",
+    "function likePost(address userAddress,uint256 postId) public",
+    "function dislikePost(address userAddress, uint256 postId) public",
     "function getUserPostsCount(address userAddress) public view returns(uint256)",
-    "function getUserPost(uint256 i,address userAdress) public view returns (string memory,string memory, address, address[] memory, address[] memory, uint256)",
+    "function getUserPost(uint256 i,address userAdress) public view returns (uint256,string memory,string memory, address, address[] memory, address[] memory, uint256)",
 
 ];
 
@@ -67,9 +67,10 @@ function ProfilePage() {
             const fetchedPosts = [];
 
             for (let i = userPostCount-1; i >=0; i--) {
-                const [content, imageURI, owner, likes, dislikes, time] = await contract.getUserPost(i,userAddress);
+                const [postId,content, imageURI, owner, likes, dislikes, time] = await contract.getUserPost(i,userAddress);
                 if (owner.toLowerCase() === accountAddress.toLowerCase()) {
-                    fetchedPosts.push({ content, imageURI, owner, likes, dislikes, time });
+                    fetchedPosts.push({ postId,content, imageURI, owner, likes, dislikes, time });
+                    console.log(postId)
                 }
             }
             setPosts(fetchedPosts);
@@ -78,13 +79,13 @@ function ProfilePage() {
         }
     };
 
-    const handleLike = async (index,userAddress,time) => {
+    const handleLike = async (userAddress,postId) => {
     try {
       const provider = new ethers.providers.Web3Provider(window.ethereum);
       const signer = provider.getSigner();
       const contract = new ethers.Contract(import.meta.env.VITE_CONTRACT_ADDRESS, abi, signer);
       const userPostCount = await contract.getUserPostsCount(userAddress);
-      const tx = await contract.likePost(userPostCount-index-1,userAddress,time);
+      const tx = await contract.likePost(userAddress,postId);
       await tx.wait();
       fetchUserPosts(account); // Refresh posts to update like count
     } catch (error) {
@@ -92,13 +93,13 @@ function ProfilePage() {
     }
   };
 
-  const handleDislike = async (index,userAddress,time) => {
+  const handleDislike = async (userAddress,postId) => {
     try {
       const provider = new ethers.providers.Web3Provider(window.ethereum);
       const signer = provider.getSigner();
       const contract = new ethers.Contract(import.meta.env.VITE_CONTRACT_ADDRESS, abi, signer);
       const userPostCount = await contract.getUserPostsCount(userAddress);
-      const tx = await contract.dislikePost(userPostCount-index-1,userAddress,time);
+      const tx = await contract.dislikePost(userAddress,postId);
       await tx.wait();
       fetchUserPosts(account); // Refresh posts to update dislike count
     } catch (error) {
@@ -167,14 +168,14 @@ function ProfilePage() {
                       <dt className="text-sm font-medium text-gray-500">Likes</dt>
                       <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
                         {post.likes.length}
-                        <button onClick={() => handleLike(index,post.owner,post.time)} className="ml-2 px-3 py-1 bg-green-200 rounded">Like</button>
+                        <button onClick={() => handleLike(post.owner,post.postId)} className="ml-2 px-3 py-1 bg-green-200 rounded">Like</button>
                       </dd>
                     </div>
                     <div className="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                       <dt className="text-sm font-medium text-gray-500">Dislikes</dt>
                       <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
                         {post.dislikes.length}
-                        <button onClick={() => handleDislike(index,post.owner,post.time)} className="ml-2 px-3 py-1 bg-red-200 rounded">Dislike</button>
+                        <button onClick={() => handleDislike(post.owner,post.postId)} className="ml-2 px-3 py-1 bg-red-200 rounded">Dislike</button>
                       </dd>
                     </div>
                   </dl>

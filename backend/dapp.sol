@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 contract SocialMedia {
     struct Post {
+        uint256 postId;
         string content;
         string imageURI;       // New field for image URL
         address owner;
@@ -22,6 +23,8 @@ contract SocialMedia {
     mapping(address => address[]) public followers; // Track followers for each user
     mapping(address => address[]) public following; // Track users being followed by each user
     mapping(address => Post[]) public userAddrToPosts;
+    uint256 public nextPostId = 0;
+    mapping(uint256 => Post) public postIdToPost;
 
     modifier onlySignedUp() {
         require(bytes(addrToUsers[msg.sender].name).length > 0, "User not signed up");
@@ -43,9 +46,11 @@ contract SocialMedia {
     }
 
     function makePost(string memory content, string memory imageURI) public onlySignedUp {
-        Post memory newPost = Post(content, imageURI, msg.sender, block.timestamp, new address[](0), new address[](0));
+        Post memory newPost = Post(nextPostId,content, imageURI, msg.sender, block.timestamp, new address[](0), new address[](0));
         posts.push(newPost);
-        userAddrToPosts[msg.sender].push(newPost);  // Add post to user's posts mapping
+        postIdToPost[nextPostId]=newPost;  // Add post to user's posts mapping
+        userAddrToPosts[msg.sender].push(newPost);
+        nextPostId++;
     }
 
     function getPostsCount() public view returns (uint256) {
@@ -63,6 +68,7 @@ contract SocialMedia {
         public 
         view 
         returns (
+            uint256,
             string memory, 
             string memory,      
             address, 
@@ -71,9 +77,10 @@ contract SocialMedia {
             uint256
         ) 
     {
-        require(i < posts.length, "Post index out of range");
-        Post storage post = posts[i];
+        // require(i < posts.length, "Post index out of range");
+        Post storage post = postIdToPost[i];
         return (
+            post.postId,
             post.content, 
             post.imageURI,        
             post.owner, 
@@ -93,6 +100,7 @@ contract SocialMedia {
         public 
         view 
         returns (
+            uint256,
             string memory, 
             string memory,      
             address, 
@@ -101,9 +109,10 @@ contract SocialMedia {
             uint256
         ) 
     {
-        require(i < userAddrToPosts[userAddress].length, "Post index out of range");
+        require(i < userAddrToPosts[userAddress].length, "Post index out of range"); // this is for optimazation
         Post storage post = userAddrToPosts[userAddress][i];
         return (
+            post.postId,
             post.content, 
             post.imageURI,        
             post.owner, 
@@ -113,16 +122,30 @@ contract SocialMedia {
         );
     }
 
-    function likePost(uint256 index,address userAddress,uint256 time) public onlySignedUp { // Should add usertoLike mapping and edit the function 
-        require(index < posts.length, "Post index out of range");
-        Post storage post = posts[index];
-        
-        // Check if the user already liked the post
+   function likePost(address userAddress, uint256 postId) public onlySignedUp {
+        Post storage post = postIdToPost[postId];
+
+        // Unlike
+        bool alreadyLiked = false;
         for (uint256 i = 0; i < post.likes.length; i++) {
             if (post.likes[i] == msg.sender) {
-                // Unlike: Remove the address from the likes array
                 post.likes[i] = post.likes[post.likes.length - 1];
                 post.likes.pop();
+                alreadyLiked = true;
+
+                // Remove like from userAddrToPosts mapping
+                for (uint256 j = 0; j < userAddrToPosts[userAddress].length; j++) {
+                    if (userAddrToPosts[userAddress][j].postId == postId) {
+                        for (uint256 k = 0; k < userAddrToPosts[userAddress][j].likes.length; k++) {
+                            if (userAddrToPosts[userAddress][j].likes[k] == msg.sender) {
+                                userAddrToPosts[userAddress][j].likes[k] = userAddrToPosts[userAddress][j].likes[userAddrToPosts[userAddress][j].likes.length - 1];
+                                userAddrToPosts[userAddress][j].likes.pop();
+                                break;
+                            }
+                        }
+                        break;
+                    }
+                }
                 return;
             }
         }
@@ -132,52 +155,97 @@ contract SocialMedia {
             if (post.dislikes[i] == msg.sender) {
                 post.dislikes[i] = post.dislikes[post.dislikes.length - 1];
                 post.dislikes.pop();
+
+                // Remove dislike from userAddrToPosts mapping
+                for (uint256 j = 0; j < userAddrToPosts[userAddress].length; j++) {
+                    if (userAddrToPosts[userAddress][j].postId == postId) {
+                        for (uint256 k = 0; k < userAddrToPosts[userAddress][j].dislikes.length; k++) {
+                            if (userAddrToPosts[userAddress][j].dislikes[k] == msg.sender) {
+                                userAddrToPosts[userAddress][j].dislikes[k] = userAddrToPosts[userAddress][j].dislikes[userAddrToPosts[userAddress][j].dislikes.length - 1];
+                                userAddrToPosts[userAddress][j].dislikes.pop();
+                                break;
+                            }
+                        }
+                        break;
+                    }
+                }
                 break;
             }
         }
-
-        // Add the user to the likes array
-        post.likes.push(msg.sender);
-        for (uint256 i = 0; i < userAddrToPosts[userAddress].length; i++) {
-            if (keccak256(abi.encode(userAddrToPosts[userAddress][i].owner,userAddrToPosts[userAddress][i].time)) == keccak256(abi.encode(userAddress,time))) {
-                userAddrToPosts[userAddress][i].likes.push(msg.sender);
-                break;
+        
+        // Like
+        if (!alreadyLiked) {
+            for (uint256 i = 0; i < userAddrToPosts[userAddress].length; i++) {
+                if (userAddrToPosts[userAddress][i].postId == postId) {
+                    userAddrToPosts[userAddress][i].likes.push(msg.sender);
+                    postIdToPost[postId].likes.push(msg.sender);
+                    break;
+                }
             }
         }
     }
 
-    function dislikePost(uint256 index,address userAddress,uint256 time) public onlySignedUp {
-        require(index < posts.length, "Post index out of range");
-        Post storage post = posts[index];
+    function dislikePost(address userAddress, uint256 postId) public onlySignedUp {
+        Post storage post = postIdToPost[postId];
 
-        // Check if the user already disliked the post
+        // Undislike
+        bool alreadyDisliked = false;
         for (uint256 i = 0; i < post.dislikes.length; i++) {
             if (post.dislikes[i] == msg.sender) {
-                // Undislike: Remove the address from the dislikes array
                 post.dislikes[i] = post.dislikes[post.dislikes.length - 1];
                 post.dislikes.pop();
+                alreadyDisliked = true;
+
+                // Remove dislike from userAddrToPosts mapping
+                for (uint256 j = 0; j < userAddrToPosts[userAddress].length; j++) {
+                    if (userAddrToPosts[userAddress][j].postId == postId) {
+                        for (uint256 k = 0; k < userAddrToPosts[userAddress][j].dislikes.length; k++) {
+                            if (userAddrToPosts[userAddress][j].dislikes[k] == msg.sender) {
+                                userAddrToPosts[userAddress][j].dislikes[k] = userAddrToPosts[userAddress][j].dislikes[userAddrToPosts[userAddress][j].dislikes.length - 1];
+                                userAddrToPosts[userAddress][j].dislikes.pop();
+                                break;
+                            }
+                        }
+                        break;
+                    }
+                }
                 return;
             }
         }
 
-        // Check if the user liked the post, remove from likes if needed
+        // Check if the user liked the post, remove like if needed
         for (uint256 i = 0; i < post.likes.length; i++) {
             if (post.likes[i] == msg.sender) {
                 post.likes[i] = post.likes[post.likes.length - 1];
                 post.likes.pop();
+
+                // Remove like from userAddrToPosts mapping
+                for (uint256 j = 0; j < userAddrToPosts[userAddress].length; j++) {
+                    if (userAddrToPosts[userAddress][j].postId == postId) {
+                        for (uint256 k = 0; k < userAddrToPosts[userAddress][j].likes.length; k++) {
+                            if (userAddrToPosts[userAddress][j].likes[k] == msg.sender) {
+                                userAddrToPosts[userAddress][j].likes[k] = userAddrToPosts[userAddress][j].likes[userAddrToPosts[userAddress][j].likes.length - 1];
+                                userAddrToPosts[userAddress][j].likes.pop();
+                                break;
+                            }
+                        }
+                        break;
+                    }
+                }
                 break;
             }
         }
 
         // Add the user to the dislikes array
-        post.dislikes.push(msg.sender);
-        for (uint256 i = 0; i < userAddrToPosts[userAddress].length; i++) {
-            if (keccak256(abi.encode(userAddrToPosts[userAddress][i].owner,userAddrToPosts[userAddress][i].time)) == keccak256(abi.encode(userAddress,time))) {
-                userAddrToPosts[userAddress][i].dislikes.push(msg.sender);
-                break;
+        if (!alreadyDisliked) {
+            for (uint256 i = 0; i < userAddrToPosts[userAddress].length; i++) {
+                if (userAddrToPosts[userAddress][i].postId == postId) {
+                    userAddrToPosts[userAddress][i].dislikes.push(msg.sender);
+                    postIdToPost[postId].dislikes.push(msg.sender);
+                    break;
+                }
             }
         }
-
     }
 
     function followUser(address userToFollow) public onlySignedUp {
@@ -200,11 +268,33 @@ contract SocialMedia {
         following[msg.sender].push(userToFollow);
     }
 
+    function unfollowUser(address userToUnfollow) public onlySignedUp {
+        // Prevent user from unfollowing themselves
+        require(userToUnfollow != msg.sender, "Cannot unfollow yourself");
+
+        // Remove the user from the followers list
+        for (uint256 i = 0; i < followers[userToUnfollow].length; i++) {
+            if (followers[userToUnfollow][i] == msg.sender) {
+                followers[userToUnfollow][i] = followers[userToUnfollow][followers[userToUnfollow].length - 1];
+                followers[userToUnfollow].pop();
+                break;
+            }
+        }
+
+        // Remove the user from the following list
+        for (uint256 i = 0; i < following[msg.sender].length; i++) {
+            if (following[msg.sender][i] == userToUnfollow) {
+                following[msg.sender][i] = following[msg.sender][following[msg.sender].length - 1];
+                following[msg.sender].pop();
+                break;
+            }
+        }
+    }
+
     function getFollowers(address userAddress) public view returns (address[] memory) {
         return followers[userAddress];
     }
     function getFollowing(address userAddress) public view returns (address[] memory) {
         return following[userAddress];
     }
-    
 }
