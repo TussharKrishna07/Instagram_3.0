@@ -12,6 +12,7 @@ const abi = [
     "function dislikePost(address userAddress, uint256 postId) public",
     "function getUserPostsCount(address userAddress) public view returns(uint256)",
     "function getUserPost(uint256 i,address userAdress) public view returns (uint256,string memory,string memory, address, address[] memory, address[] memory, uint256)",
+    "function followUser(address userToFollow) public"
 
 ];
 
@@ -79,6 +80,21 @@ function ProfilePage() {
         }
     };
 
+    const handleFollow = async (userToFollow) => {
+        try {
+          const provider = new ethers.providers.Web3Provider(window.ethereum);
+          const signer = provider.getSigner();
+          const contract = new ethers.Contract(import.meta.env.VITE_CONTRACT_ADDRESS, abi, signer);
+          const tx = await contract.followUser(userToFollow);
+          await tx.wait();
+          alert(`Successfully followed user: ${userToFollow}`);
+          fetchProfileData(userToFollow); // Refresh profile data to update follower count
+        } catch (error) {
+          console.error("Error following user:", error);
+          alert("Failed to follow user. Please try again.");
+        }
+      };
+
     const handleLike = async (userAddress,postId) => {
     try {
       const provider = new ethers.providers.Web3Provider(window.ethereum);
@@ -127,6 +143,12 @@ function ProfilePage() {
                                     <div>
                                         <span className="font-semibold">{following}</span> Following
                                     </div>
+                                    <button
+                                      onClick={() => handleFollow(account)}
+                                      className="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                                    >
+                                      Follow
+                                    </button>
                                 </div>
                             </div>
                         </div>

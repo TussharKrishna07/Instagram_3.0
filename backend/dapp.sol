@@ -253,20 +253,37 @@ contract SocialMedia {
         require(userToFollow != msg.sender, "Cannot follow yourself");
 
         // Check if the user is already being followed
-        // address[] storage currentFollowers = followers[msg.sender];
-        // for (uint256 i = 0; i < currentFollowers.length; i++) {
-        //     if (currentFollowers[i] == userToFollow) {
-        //         // If already following, remove from the list (unfollow)
-        //         currentFollowers[i] = currentFollowers[currentFollowers.length - 1];
-        //         currentFollowers.pop();
-        //         return;
-        //     }
-        // }
+        address[] storage currentFollowers = followers[userToFollow];
+        bool alreadyFollowing = false;
+        for (uint256 i = 0; i < currentFollowers.length; i++) {
+            if (currentFollowers[i] == msg.sender) {
+                // If already following, remove from the list (unfollow)
+                currentFollowers[i] = currentFollowers[currentFollowers.length - 1];
+                currentFollowers.pop();
 
-        // Add the user to the followers list
-        followers[userToFollow].push(msg.sender);
-        following[msg.sender].push(userToFollow);
+                // Remove from the following list as well
+                address[] storage currentFollowing = following[msg.sender];
+                for (uint256 j = 0; j < currentFollowing.length; j++) {
+                    if (currentFollowing[j] == userToFollow) {
+                        currentFollowing[j] = currentFollowing[currentFollowing.length - 1];
+                        currentFollowing.pop();
+                        break;
+                    }
+                }
+
+                alreadyFollowing = true;
+                break;
+            }
+        }
+
+        // Add the user to the followers list if not already following
+        if (!alreadyFollowing) {
+            followers[userToFollow].push(msg.sender);
+            following[msg.sender].push(userToFollow);
+        }
     }
+
+    
 
     function unfollowUser(address userToUnfollow) public onlySignedUp {
         // Prevent user from unfollowing themselves
