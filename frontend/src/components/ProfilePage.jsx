@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { ethers } from 'ethers';
 import { Link, useParams } from 'react-router-dom';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faComment, faHeart, faHeartBroken, faCheck } from '@fortawesome/free-solid-svg-icons';
 
 const abi = [
     "function getUserName(address addr) public view returns (string memory userName)",
@@ -189,7 +191,7 @@ function ProfilePage() {
                                       onClick={() => handleFollow(account)}
                                       className="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                                     >
-                                      Follow
+                                      <FontAwesomeIcon icon={faCheck} className="mr-1" /> Follow
                                     </button>
                                 </div>
                             </div>
@@ -232,14 +234,18 @@ function ProfilePage() {
                       <dt className="text-sm font-medium text-gray-500">Likes</dt>
                       <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
                         {post.likes.length}
-                        <button onClick={() => handleLike(post.owner,post.postId)} className="ml-2 px-3 py-1 bg-green-200 rounded">Like</button>
+                        <button onClick={() => handleLike(post.owner,post.postId)} className="ml-2 px-3 py-1 bg-green-200 rounded">
+                        <FontAwesomeIcon icon={faHeart} className="mr-1" /> Like
+                        </button>
                       </dd>
                     </div>
                     <div className="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                       <dt className="text-sm font-medium text-gray-500">Dislikes</dt>
                       <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
                         {post.dislikes.length}
-                        <button onClick={() => handleDislike(post.owner,post.postId)} className="ml-2 px-3 py-1 bg-red-200 rounded">Dislike</button>
+                        <button onClick={() => handleDislike(post.owner,post.postId)} className="ml-2 px-3 py-1 bg-red-200 rounded">
+                        <FontAwesomeIcon icon={faHeartBroken} className="mr-1" /> Dislike
+                        </button>
                       </dd>
                     </div>
                     <div>
@@ -251,7 +257,7 @@ function ProfilePage() {
                           }}
                           className="px-4 py-2 mr-2 bg-blue-500 text-white rounded hover:bg-blue-700 focus:outline-none focus:shadow-outline"
                         >
-                          View Replies
+                          <FontAwesomeIcon icon={faComment} className="mr-1" /> View Replies
                         </button>
                         <button
                           onClick={() => setSelectedPostId(post.postId)}

@@ -3,7 +3,7 @@ import axios from 'axios';
 import { ethers } from 'ethers';
 import { useNavigate, Link } from 'react-router-dom'; // Import useNavigate and Link
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'; // Import FontAwesomeIcon
-import { faUserCircle } from '@fortawesome/free-solid-svg-icons'; // Import the user icon
+import { faUserCircle, faComment, faHeart, faHeartBroken } from '@fortawesome/free-solid-svg-icons'; // Import the user icon
 
 const abi = [
   "function makePost(string memory content, string memory imageURI)",
@@ -375,7 +375,7 @@ function HomePage() {
 
           <div className="space-y-6">
             {posts.map((post, index) => (
-              <div key={index} className="bg-white shadow overflow-hidden sm:rounded-lg">
+              <div key={index} className="bg-white shadow overflow-hidden rounded-lg">
                 <div className="px-4 py-5 sm:px-6">
                   <div className="flex items-center justify-between">
                     <Link to={`/ProfilePage/${post.owner}`} className="flex items-center">
@@ -412,14 +412,18 @@ function HomePage() {
                       <dt className="text-sm font-medium text-gray-500">Likes</dt>
                       <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
                         {post.likes.length}
-                        <button onClick={() => handleLike(post.owner,post.postId)} className="ml-2 px-3 py-1 bg-green-200 rounded">Like</button>
+                        <button onClick={() => handleLike(post.owner,post.postId)} className="ml-2 px-3 py-1 bg-green-200 rounded">
+                          <FontAwesomeIcon icon={faHeart} className="mr-1" /> Like
+                        </button>
                       </dd>
                     </div>
                     <div className="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                       <dt className="text-sm font-medium text-gray-500">Dislikes</dt>
                       <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
                         {post.dislikes.length}
-                        <button onClick={() => handleDislike(post.owner,post.postId)} className="ml-2 px-3 py-1 bg-red-200 rounded">Dislike</button>
+                        <button onClick={() => handleDislike(post.owner,post.postId)} className="ml-2 px-3 py-1 bg-red-200 rounded">
+                          <FontAwesomeIcon icon={faHeartBroken} className="mr-1" /> Dislike
+                        </button>
                       </dd>
                     </div>
                     <div>
@@ -431,7 +435,7 @@ function HomePage() {
                           }}
                           className="px-4 py-2 mr-2 bg-blue-500 text-white rounded hover:bg-blue-700 focus:outline-none focus:shadow-outline"
                         >
-                          View Replies
+                          <FontAwesomeIcon icon={faComment} className="mr-1" /> View Replies
                         </button>
                         <button
                           onClick={() => setSelectedPostId(post.postId)}
@@ -454,7 +458,12 @@ function HomePage() {
                             value={newComment}
                             onChange={(e) => setNewComment(e.target.value)}
                           />
-                          <button onClick={() => handleAddComment(post.postId)}>Add Comment</button>
+                          <button
+                            onClick={() => handleAddComment(post.postId)}
+                            className="ml-2 px-3 py-1 bg-indigo-500 text-white rounded hover:bg-indigo-700 focus:outline-none focus:shadow-outline"
+                          >
+                            Add Comment
+                          </button>
                         </div>
                       )}
                     </div>
