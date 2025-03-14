@@ -16,7 +16,9 @@ const abi = [
   "function getUser(uint256 index) public view returns (string memory name, address userAddr)",
   "function getUsersCount() public view returns (uint256)",
   "function addComment(uint256 postId, string memory content) public",
-  "function getComments(uint256 postId) public view returns (tuple(uint256 commentId, uint256 postId, string content, address commenter, uint256 timestamp)[] memory)"
+  "function getComments(uint256 postId) public view returns (tuple(uint256 commentId, uint256 postId, string content, address commenter, uint256 timestamp)[] memory)",
+  "function getFollowers(address userAddress) public view returns (address[] memory)",
+  "function getFollowing(address userAddress) public view returns (address[] memory)"
 ];
 
 function HomePage() {
@@ -33,6 +35,7 @@ function HomePage() {
   const [comments, setComments] = useState({});
   const [newComment, setNewComment] = useState('');
   const [selectedPostId, setSelectedPostId] = useState(null);
+  const [followStatus, setFollowStatus] = useState({});
 
   useEffect(() => {
     const provider = new ethers.providers.Web3Provider(window.ethereum);
@@ -199,6 +202,20 @@ function HomePage() {
     }
   };
 
+  const checkFollowStatus = async (userToCheck) => {
+    try {
+      const provider = new ethers.providers.Web3Provider(window.ethereum);
+      const signer = provider.getSigner();
+      const contract = new ethers.Contract(import.meta.env.VITE_CONTRACT_ADDRESS, abi, signer);
+      const followersList = await contract.getFollowers(userToCheck);
+      const currentUser = await signer.getAddress();
+      const isFollowing = followersList.some(follower => follower.toLowerCase() === currentUser.toLowerCase());
+      setFollowStatus(prev => ({...prev, [userToCheck]: isFollowing}));
+    } catch (error) {
+      console.error("Error checking follow status:", error);
+    }
+  };
+
   const handleFollow = async (userToFollow) => {
     try {
       const provider = new ethers.providers.Web3Provider(window.ethereum);
@@ -206,10 +223,10 @@ function HomePage() {
       const contract = new ethers.Contract(import.meta.env.VITE_CONTRACT_ADDRESS, abi, signer);
       const tx = await contract.followUser(userToFollow);
       await tx.wait();
-      alert(`Successfully followed user: ${userToFollow}`);
+      await checkFollowStatus(userToFollow);
     } catch (error) {
-      console.error("Error following user:", error);
-      alert("Failed to follow user. Please try again.");
+      console.error("Error following/unfollowing user:", error);
+      alert("Failed to follow/unfollow user. Please try again.");
     }
   };
 
@@ -282,6 +299,12 @@ function HomePage() {
       console.error("Error adding comment:", error);
     }
   };
+
+  useEffect(() => {
+    posts.forEach(post => {
+      checkFollowStatus(post.owner);
+    });
+  }, [posts]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-indigo-100">
@@ -378,9 +401,13 @@ function HomePage() {
                   </Link>
                   <button
                     onClick={() => handleFollow(post.owner)}
-                    className="px-4 py-2 rounded-lg bg-indigo-50 text-indigo-600 font-medium hover:bg-indigo-100 transition duration-200"
+                    className={`px-4 py-2 rounded-lg font-medium transition duration-200 ${
+                      followStatus[post.owner]
+                        ? 'bg-red-50 text-red-600 hover:bg-red-100'
+                        : 'bg-indigo-50 text-indigo-600 hover:bg-indigo-100'
+                    }`}
                   >
-                    Follow
+                    {followStatus[post.owner] ? 'Unfollow' : 'Follow'}
                   </button>
                 </div>
 

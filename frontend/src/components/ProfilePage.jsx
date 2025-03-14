@@ -29,10 +29,14 @@ function ProfilePage() {
     const [newComment, setNewComment] = useState('');
     const [selectedPostId, setSelectedPostId] = useState(null);
     const { userAddress } = useParams();
+    const [isFollowing, setIsFollowing] = useState(false);
 
     useEffect(() => {
-        fetchProfileData(userAddress);
-        fetchUserPosts(userAddress);
+        if (userAddress) {
+            fetchProfileData(userAddress);
+            fetchUserPosts(userAddress);
+            checkFollowStatus(userAddress);
+        }
     }, [userAddress]);
 
     const fetchProfileData = async (userAddress) => {
@@ -167,6 +171,19 @@ function ProfilePage() {
     }
   };
 
+  const checkFollowStatus = async (userToCheck) => {
+    try {
+      const provider = new ethers.providers.Web3Provider(window.ethereum);
+      const signer = provider.getSigner();
+      const contract = new ethers.Contract(import.meta.env.VITE_CONTRACT_ADDRESS, abi, signer);
+      const followersList = await contract.getFollowers(userToCheck);
+      const currentUser = await signer.getAddress();
+      setIsFollowing(followersList.some(follower => follower.toLowerCase() === currentUser.toLowerCase()));
+    } catch (error) {
+      console.error("Error checking follow status:", error);
+    }
+  };
+
     return (
         <div className="min-h-screen bg-gradient-to-br from-purple-50 via-indigo-50 to-blue-50">
             <div className="max-w-5xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
@@ -194,10 +211,14 @@ function ProfilePage() {
                                 </div>
                                 <button
                                     onClick={() => handleFollow(account)}
-                                    className="px-6 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-medium rounded-xl hover:from-purple-700 hover:to-indigo-700 transform transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                                    className={`px-6 py-2 font-medium rounded-xl transform transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 ${
+                                        isFollowing
+                                          ? 'bg-gradient-to-r from-red-600 to-pink-600 text-white hover:from-red-700 hover:to-pink-700 focus:ring-red-500'
+                                          : 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:from-purple-700 hover:to-indigo-700 focus:ring-indigo-500'
+                                      }`}
                                 >
                                     <FontAwesomeIcon icon={faCheck} className="mr-2" />
-                                    Follow
+                                    {isFollowing ? 'Unfollow' : 'Follow'}
                                 </button>
                             </div>
                         </div>
