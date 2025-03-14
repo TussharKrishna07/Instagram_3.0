@@ -17,13 +17,23 @@ contract SocialMedia {
         address userAddr;
     }
 
+    struct Comment {
+        uint256 commentId;
+        uint256 postId;
+        string content;
+        address commenter;
+        uint256 timestamp;
+    }
+    
     mapping(address => User) public addrToUsers;
     Post[] internal posts;
     User[] internal users;
     mapping(address => address[]) public followers; // Track followers for each user
     mapping(address => address[]) public following; // Track users being followed by each user
     mapping(address => Post[]) public userAddrToPosts;
+    mapping(uint256 => Comment[]) public postComments;
     uint256 public nextPostId = 0;
+    uint256 public nextCommentId = 0;
     mapping(uint256 => Post) public postIdToPost;
 
     modifier onlySignedUp() {
@@ -313,5 +323,15 @@ contract SocialMedia {
     }
     function getFollowing(address userAddress) public view returns (address[] memory) {
         return following[userAddress];
+    }
+
+    function addComment(uint256 postId, string memory content) public onlySignedUp {
+        Comment memory newComment = Comment(nextCommentId,postId, content, msg.sender, block.timestamp);
+        postComments[postId].push(newComment);
+        nextCommentId++;
+    }
+
+    function getComments(uint256 postId) public view returns (Comment[] memory) {
+        return postComments[postId];
     }
 }

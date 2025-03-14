@@ -12,8 +12,9 @@ const abi = [
     "function dislikePost(address userAddress, uint256 postId) public",
     "function getUserPostsCount(address userAddress) public view returns(uint256)",
     "function getUserPost(uint256 i,address userAdress) public view returns (uint256,string memory,string memory, address, address[] memory, address[] memory, uint256)",
-    "function followUser(address userToFollow) public"
-
+    "function followUser(address userToFollow) public",
+    "function addComment(uint256 postId, string memory content) public",
+    "function getComments(uint256 postId) public view returns (tuple(uint256 commentId, uint256 postId, string content, address commenter, uint256 timestamp)[] memory)"
 ];
 
 function ProfilePage() {
@@ -22,6 +23,9 @@ function ProfilePage() {
     const [posts, setPosts] = useState([]);
     const [followers, setFollowers] = useState(0); 
     const [following, setFollowing] = useState(0);
+    const [comments, setComments] = useState({});
+    const [newComment, setNewComment] = useState('');
+    const [selectedPostId, setSelectedPostId] = useState(null);
     const { userAddress } = useParams();
 
     useEffect(() => {
@@ -123,6 +127,44 @@ function ProfilePage() {
     }
   };
 
+  const fetchComments = async (postId) => {
+    try {
+      const provider = new ethers.providers.Web3Provider(window.ethereum);
+      const signer = provider.getSigner();
+      const contract = new ethers.Contract(import.meta.env.VITE_CONTRACT_ADDRESS, abi, signer);
+      const fetchedComments = await contract.getComments(postId);
+
+      // Fetch usernames for each comment
+      const commentsWithUsernames = await Promise.all(
+        fetchedComments.map(async (comment) => {
+          const username = await contract.getUserName(comment.commenter);
+          return { ...comment, username };
+        })
+      );
+
+      setComments(prevState => ({
+        ...prevState,
+        [postId]: commentsWithUsernames
+      }));
+    } catch (error) {
+      console.error("Error fetching comments:", error);
+    }
+  };
+
+  const handleAddComment = async (postId) => {
+    try {
+      const provider = new ethers.providers.Web3Provider(window.ethereum);
+      const signer = provider.getSigner();
+      const contract = new ethers.Contract(import.meta.env.VITE_CONTRACT_ADDRESS, abi, signer);
+      const tx = await contract.addComment(postId, newComment);
+      await tx.wait();
+      setNewComment('');
+      fetchComments(postId); // Refresh comments after adding
+    } catch (error) {
+      console.error("Error adding comment:", error);
+    }
+  };
+
     return (
         <div className="min-h-screen bg-gray-100">
             <div className="container mx-auto py-10">
@@ -199,6 +241,42 @@ function ProfilePage() {
                         {post.dislikes.length}
                         <button onClick={() => handleDislike(post.owner,post.postId)} className="ml-2 px-3 py-1 bg-red-200 rounded">Dislike</button>
                       </dd>
+                    </div>
+                    <div>
+                      <div className="flex">
+                        <button
+                          onClick={() => {
+                            setSelectedPostId(post.postId);
+                            fetchComments(post.postId);
+                          }}
+                          className="px-4 py-2 mr-2 bg-blue-500 text-white rounded hover:bg-blue-700 focus:outline-none focus:shadow-outline"
+                        >
+                          View Replies
+                        </button>
+                        <button
+                          onClick={() => setSelectedPostId(post.postId)}
+                          className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-700 focus:outline-none focus:shadow-outline"
+                        >
+                          Add Comment
+                        </button>
+                      </div>
+                      {selectedPostId === post.postId && (
+                        <div>
+                          {comments[post.postId] && comments[post.postId].map((comment, index) => (
+                            <div key={index} className="mt-2 p-2 bg-gray-100 rounded">
+                              {comment.content} - {comment.username}
+                            </div>
+                          ))}
+                          <input
+                            type="text"
+                            className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 mt-1 block w-full sm:text-sm border border-gray-300 rounded-md"
+                            placeholder="Add a comment..."
+                            value={newComment}
+                            onChange={(e) => setNewComment(e.target.value)}
+                          />
+                          <button onClick={() => handleAddComment(post.postId)}>Add Comment</button>
+                        </div>
+                      )}
                     </div>
                   </dl>
                 </div>
