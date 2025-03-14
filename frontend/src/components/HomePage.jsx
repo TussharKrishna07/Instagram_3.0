@@ -12,7 +12,9 @@ const abi = [
   "function getUserName(address addr) public view returns (string memory userName)",
   "function likePost(address userAddress,uint256 postId) public",
   "function dislikePost(address userAddress, uint256 postId) public",
-  "function followUser(address userToFollow) public"
+  "function followUser(address userToFollow) public",
+  "function getUser(uint256 index) public view returns (string memory name, address userAddr)",
+  "function getUsersCount() public view returns (uint256)"
 ];
 
 function HomePage() {
@@ -24,6 +26,8 @@ function HomePage() {
   const fileInputRef = useRef(null);
   const navigate = useNavigate(); // Initialize useNavigate
   const [account, setAccount] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
 
   useEffect(() => {
     const provider = new ethers.providers.Web3Provider(window.ethereum);
@@ -204,10 +208,63 @@ function HomePage() {
     }
   };
 
+  const handleSearchChange = (event) => {
+    setSearchTerm(event.target.value);
+  };
+
+  const handleSearchSubmit = async (event) => {
+    event.preventDefault();
+    try {
+      const provider = new ethers.providers.Web3Provider(window.ethereum);
+      const signer = provider.getSigner();
+      const contract = new ethers.Contract(import.meta.env.VITE_CONTRACT_ADDRESS,abi,signer);
+      const usersCount = await contract.getUsersCount();
+      const fetchedUsers = [];
+      for (let i = 0; i < usersCount; i++) {
+        const [username,userAddress] = await contract.getUser(i);
+        fetchedUsers.push({ username,userAddress });
+        console.log(username);
+      }
+      const results = fetchedUsers.filter((user) => user.username.includes(searchTerm));
+      console.log(results);
+      setSearchResults(results);
+      if(results.length === 0){
+        alert("No users found");
+      }else{
+        navigate('/ProfilePage/'+results[0].userAddress);
+      }
+
+    } catch (error) {
+      console.error("Error searching users:", error);
+      alert("Failed to search users. Please try again.");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-100">
       <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
+          {/* Search Bar */}
+          <form onSubmit={handleSearchSubmit} className="mb-4">
+            <div className="flex rounded-md shadow-sm">
+              <div className="relative flex items-stretch flex-grow focus-within:z-10">
+                <input
+                  type="text"
+                  className="focus:ring-indigo-500 focus:border-indigo-500 block w-full rounded-none rounded-l-md sm:text-sm border-gray-300"
+                  placeholder="Search by username"
+                  value={searchTerm}
+                  onChange={handleSearchChange}
+                />
+              </div>
+              <button
+                type="submit"
+                className="-ml-px relative inline-flex items-center space-x-2 px-4 py-2 border border-gray-300 text-sm font-medium rounded-r-md text-gray-700 bg-gray-50 hover:bg-gray-100 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
+              >
+                <span>Search</span>
+              </button>
+            </div>
+          </form>
+
           <div className="flex justify-between items-center mb-6"> {/* Use flex to align items */}
             <h1 className="text-3xl font-bold text-gray-900">Social Media Feed</h1>
             <button // Add a button to navigate to the profile page
