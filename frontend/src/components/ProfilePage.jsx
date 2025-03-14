@@ -168,128 +168,165 @@ function ProfilePage() {
   };
 
     return (
-        <div className="min-h-screen bg-gray-100">
-            <div className="container mx-auto py-10">
+        <div className="min-h-screen bg-gradient-to-br from-purple-50 via-indigo-50 to-blue-50">
+            <div className="max-w-5xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
                 {/* Profile Header */}
-                <div className="bg-white shadow rounded-lg mb-8">
-                    <div className="p-6">
-                        <div className="flex items-center">
-                            <Link to={`/ProfilePage/${account}`} className="w-16 h-16 rounded-full bg-gray-300 flex-shrink-0">
-                                {/* Placeholder for profile picture */}
-                            </Link>
-                            <div className="ml-4">
-                                <h2 className="text-xl font-semibold">{username || "Unnamed User"}</h2>
-                                <p className="text-gray-500">{account}</p>
-                                <div className="flex mt-2">
-                                    <div className="mr-4">
-                                        <span className="font-semibold">{followers}</span> Followers
-                                    </div>
-                                    <div>
-                                        <span className="font-semibold">{following}</span> Following
-                                    </div>
-                                    <button
-                                      onClick={() => handleFollow(account)}
-                                      className="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                                    >
-                                      <FontAwesomeIcon icon={faCheck} className="mr-1" /> Follow
-                                    </button>
+                <div className="bg-white rounded-2xl shadow-xl p-8 mb-8 transform transition-all duration-200 hover:shadow-2xl">
+                    <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
+                        <div className="w-32 h-32 rounded-full bg-gradient-to-r from-purple-400 to-indigo-500 flex items-center justify-center text-white text-4xl font-bold">
+                            {username ? username[0].toUpperCase() : "?"}
+                        </div>
+                        <div className="flex-1 text-center md:text-left">
+                            <h2 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
+                                {username || "Unnamed User"}
+                            </h2>
+                            <p className="text-gray-500 mt-2 font-medium">
+                                {account}
+                            </p>
+                            <div className="flex flex-wrap items-center justify-center md:justify-start gap-6 mt-4">
+                                <div className="flex flex-col items-center md:items-start">
+                                    <span className="text-2xl font-bold text-gray-900">{followers}</span>
+                                    <span className="text-sm text-gray-500">Followers</span>
                                 </div>
+                                <div className="flex flex-col items-center md:items-start">
+                                    <span className="text-2xl font-bold text-gray-900">{following}</span>
+                                    <span className="text-sm text-gray-500">Following</span>
+                                </div>
+                                <button
+                                    onClick={() => handleFollow(account)}
+                                    className="px-6 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-medium rounded-xl hover:from-purple-700 hover:to-indigo-700 transform transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                                >
+                                    <FontAwesomeIcon icon={faCheck} className="mr-2" />
+                                    Follow
+                                </button>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 {/* User Posts */}
-                <div className="bg-white shadow rounded-lg">
-                    <div className="p-6">
-                        <h3 className="text-lg font-semibold mb-4">Your Posts</h3>
-                        <div className="space-y-6">
-            {posts.map((post, index) => (
-              <div key={index} className="bg-white shadow overflow-hidden sm:rounded-lg">
-                <div className="px-4 py-5 sm:px-6">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-lg leading-6 font-medium text-gray-900">{post.username}</h3>
-                    <p className="text-sm text-gray-500">{post.owner}</p>
-                  </div>
-                  <p className="mt-1 max-w-2xl text-sm text-gray-500">
-                    {new Date(post.time * 1000).toLocaleString()}
-                  </p>
-                </div>
-                <div className="border-t border-gray-200 px-4 py-5 sm:p-0">
-                  <dl className="sm:divide-y sm:divide-gray-200">
-                    <div className="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                      <dt className="text-sm font-medium text-gray-500">Content</dt>
-                      <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                        {post.content}
-                        {post.imageURI && (
-                          <img
-                            src={post.imageURI}
-                            alt="Post Image"
-                            className="mt-4 max-w-full h-auto rounded"
-                          />
-                        )}
-                      </dd>
-                    </div>
-                    <div className="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                      <dt className="text-sm font-medium text-gray-500">Likes</dt>
-                      <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                        {post.likes.length}
-                        <button onClick={() => handleLike(post.owner,post.postId)} className="ml-2 px-3 py-1 bg-green-200 rounded">
-                        <FontAwesomeIcon icon={faHeart} className="mr-1" /> Like
-                        </button>
-                      </dd>
-                    </div>
-                    <div className="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                      <dt className="text-sm font-medium text-gray-500">Dislikes</dt>
-                      <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                        {post.dislikes.length}
-                        <button onClick={() => handleDislike(post.owner,post.postId)} className="ml-2 px-3 py-1 bg-red-200 rounded">
-                        <FontAwesomeIcon icon={faHeartBroken} className="mr-1" /> Dislike
-                        </button>
-                      </dd>
-                    </div>
-                    <div>
-                      <div className="flex">
-                        <button
-                          onClick={() => {
-                            setSelectedPostId(post.postId);
-                            fetchComments(post.postId);
-                          }}
-                          className="px-4 py-2 mr-2 bg-blue-500 text-white rounded hover:bg-blue-700 focus:outline-none focus:shadow-outline"
-                        >
-                          <FontAwesomeIcon icon={faComment} className="mr-1" /> View Replies
-                        </button>
-                        <button
-                          onClick={() => setSelectedPostId(post.postId)}
-                          className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-700 focus:outline-none focus:shadow-outline"
-                        >
-                          Add Comment
-                        </button>
-                      </div>
-                      {selectedPostId === post.postId && (
-                        <div>
-                          {comments[post.postId] && comments[post.postId].map((comment, index) => (
-                            <div key={index} className="mt-2 p-2 bg-gray-100 rounded">
-                              {comment.content} - {comment.username}
+                <div className="space-y-6">
+                    <h3 className="text-2xl font-bold text-gray-900 mb-6">Posts</h3>
+                    {posts.map((post, index) => (
+                        <div key={index} className="bg-white rounded-xl shadow-lg overflow-hidden transform transition-all duration-200 hover:scale-[1.02]">
+                            <div className="p-6">
+                                <div className="flex items-center justify-between mb-4">
+                                    <div className="flex items-center space-x-3">
+                                        <div className="w-10 h-10 rounded-full bg-gradient-to-r from-purple-400 to-indigo-500 flex items-center justify-center text-white font-bold">
+                                            {username ? username[0].toUpperCase() : "?"}
+                                        </div>
+                                        <div>
+                                            <h3 className="text-lg font-semibold text-gray-900">{username}</h3>
+                                            <p className="text-sm text-gray-500">
+                                                {new Date(post.time * 1000).toLocaleDateString('en-US', {
+                                                    year: 'numeric',
+                                                    month: 'long',
+                                                    day: 'numeric'
+                                                })}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <p className="text-gray-600 mb-4">{post.content}</p>
+
+                                {post.imageURI && (
+                                    <img
+                                        src={post.imageURI}
+                                        alt="Post"
+                                        className="rounded-lg w-full object-cover max-h-[32rem] mb-4"
+                                    />
+                                )}
+
+                                <div className="flex items-center gap-6">
+                                    <button
+                                        onClick={() => handleLike(post.owner, post.postId)}
+                                        className="flex items-center gap-2 text-gray-600 hover:text-rose-500 transition-colors duration-200"
+                                    >
+                                        <FontAwesomeIcon icon={faHeart} />
+                                        <span>{post.likes.length} Likes</span>
+                                    </button>
+                                    <button
+                                        onClick={() => handleDislike(post.owner, post.postId)}
+                                        className="flex items-center gap-2 text-gray-600 hover:text-blue-500 transition-colors duration-200"
+                                    >
+                                        <FontAwesomeIcon icon={faHeartBroken} />
+                                        <span>{post.dislikes.length} Dislikes</span>
+                                    </button>
+                                </div>
+
+                                {/* Comments Section */}
+                                <div className="mt-6 pt-6 border-t border-gray-100">
+                                    <div className="flex gap-3">
+                                        <button
+                                            onClick={() => {
+                                                setSelectedPostId(post.postId);
+                                                fetchComments(post.postId);
+                                            }}
+                                            className="px-4 py-2 rounded-lg bg-gradient-to-r from-blue-500 to-blue-600 text-white font-medium hover:from-blue-600 hover:to-blue-700 transition-all duration-200 transform hover:scale-105 shadow-md"
+                                        >
+                                            <FontAwesomeIcon icon={faComment} className="mr-2" />
+                                            {comments[post.postId]?.length || 0} Replies
+                                        </button>
+                                        <button
+                                            onClick={() => setSelectedPostId(post.postId)}
+                                            className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-500 to-emerald-600 text-white font-medium hover:from-emerald-600 hover:to-emerald-700 transition-all duration-200 transform hover:scale-105 shadow-md"
+                                        >
+                                            Add Comment
+                                        </button>
+                                    </div>
+
+                                    {selectedPostId === post.postId && (
+                                        <div className="mt-6 space-y-4">
+                                            <div className="bg-gray-50 rounded-xl p-4">
+                                                <div className="flex gap-3">
+                                                    <input
+                                                        type="text"
+                                                        className="flex-1 px-4 py-2 rounded-lg border-2 border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-200 shadow-sm"
+                                                        placeholder="Write a comment..."
+                                                        value={newComment}
+                                                        onChange={(e) => setNewComment(e.target.value)}
+                                                    />
+                                                    <button
+                                                        onClick={() => handleAddComment(post.postId)}
+                                                        className="px-6 py-2 rounded-lg bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-medium hover:from-indigo-600 hover:to-purple-600 transition-all duration-200 transform hover:scale-105 shadow-md"
+                                                    >
+                                                        Post
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            <div className="space-y-3 max-h-96 overflow-y-auto custom-scrollbar">
+                                                {comments[post.postId]?.map((comment, index) => (
+                                                    <div key={index} 
+                                                         className="bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition-all duration-200 border border-gray-100">
+                                                        <div className="flex items-start space-x-3">
+                                                            <div className="flex-shrink-0">
+                                                                <div className="w-8 h-8 rounded-full bg-gradient-to-r from-purple-400 to-indigo-500 flex items-center justify-center text-white text-sm font-bold">
+                                                                    {comment.username[0].toUpperCase()}
+                                                                </div>
+                                                            </div>
+                                                            <div className="flex-1 min-w-0">
+                                                                <p className="text-sm font-medium text-gray-900">
+                                                                    {comment.username}
+                                                                </p>
+                                                                <p className="text-sm text-gray-500">
+                                                                    {comment.content}
+                                                                </p>
+                                                                <p className="text-xs text-gray-400 mt-1">
+                                                                    {new Date(comment.timestamp * 1000).toLocaleDateString()}
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
-                          ))}
-                          <input
-                            type="text"
-                            className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 mt-1 block w-full sm:text-sm border border-gray-300 rounded-md"
-                            placeholder="Add a comment..."
-                            value={newComment}
-                            onChange={(e) => setNewComment(e.target.value)}
-                          />
-                          <button onClick={() => handleAddComment(post.postId)}>Add Comment</button>
                         </div>
-                      )}
-                    </div>
-                  </dl>
-                </div>
-              </div>
-            ))}
-          </div>
-                    </div>
+                    ))}
                 </div>
             </div>
         </div>
